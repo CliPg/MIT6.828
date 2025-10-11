@@ -558,6 +558,43 @@ gdb-multiarch kernel/kernel
 (gdb) target remote :26000
 ```
 
+## 断点
+
+查看当前断点
+
+```
+info breakpoints
+```
+
+打断点
+
+```
+b 文件名:行
+```
+
+删除断点
+
+```
+delete 编号
+```
+
+
+
+## 查看变量
+
+```
+p 变量名
+```
+
+
+
+## 退出
+
+```
+kill
+quit
+```
+
 
 
 # System call tracing
@@ -714,3 +751,80 @@ sysinfotest: OK
 6. 为了收集空闲内存大小，在 **kernel/kalloc.c** 中添加一个函数。
 
 7. 为了收集进程数量，在 **kernel/proc.c** 中添加一个函数。
+
+
+
+**implementation**
+
+## 1. 用户态的调用
+
+你在 `sysinfotest.c` 里写：
+
+```
+struct sysinfo info;
+sysinfo(&info);
+```
+
+这里的 `sysinfo()` 是用户态函数，它在 **user/user.h** 中有声明：
+
+```
+struct sysinfo;
+int sysinfo(struct sysinfo *);
+```
+
+用户程序看到的就是这个函数原型。
+
+------
+
+## 2. 用户态的系统调用 stub
+
+在 xv6 中，每个系统调用有一个 **stub**，它是用汇编写的，调用 `ecall`（RISC-V 指令）进入内核。
+
+例如，你在 **user/usys.pl** 中加了 `sysinfo`，生成 `user/usys.S`：
+
+```
+.globl sysinfo
+sysinfo:
+    li a7, SYS_sysinfo   # 系统调用号放到 a7
+    ecall                # 调用内核
+    ret                  # 返回用户态
+```
+
+用户程序调用 `sysinfo(&info)`，实际执行这个 stub，执行 `ecall` 指令。
+
+------
+
+## 3. 内核态处理系统调用
+
+`ecall` 会触发 **陷入内核态**，跳转到 xv6 内核的系统调用处理函数 **syscall()**（在 kernel/syscall.c）。
+
+- 内核读取寄存器 `a7`（系统调用号）
+- 找到对应的系统调用处理函数，例如 `sys_sysinfo()`
+
+在 **kernel/sysproc.c** 中，你实现了：
+
+```
+uint64 sys_sysinfo(void) {
+    struct sysinfo info;
+    uint64 uaddr;
+
+    argaddr(0, &uaddr);           // 获取用户传进来的地址
+    info.freemem = kfreemem();
+    info.nproc   = nproc();
+    struct proc *p = myproc();
+    copyout(p->pagetable, uaddr, (char *)&info, sizeof(info)); // 写回用户空间
+    return 0;
+}
+```
+
+`argaddr(0, &uaddr)` 就是把用户传入的指针参数（`&info`）取出来，保存在 `uaddr`。
+
+------
+
+## 4. 返回用户态
+
+`sys_sysinfo()` 执行完后，将结果写回用户态传入的结构体指针。
+
+- 内核通过 `copyout()` 将内核态的 `struct sysinfo info` 拷贝到用户态内存 `uaddr`
+- 系统调用返回，用户程序继续执行
+- 用户程序的 `info` 结构体现在已经被填充了 `freemem` 和 `nproc`
