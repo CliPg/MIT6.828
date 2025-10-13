@@ -39,6 +39,12 @@ Stack Frame有两个重要的寄存器，一个是SP(Stack Pointer)，指向Stac
 
 在ECALL之后，实际上会中断用户代码的执行，为了用户空间的代码恢复执行，需要做一系列事情。在syscall函数中，会调用一个函数叫做usertrapret，它也位于trap.c中，这个函数完成了部分方便在C代码中实现的返回到用户空间的工作。除此之外，最终还有一些工作只能在汇编语言中完成。这部分工作通过汇编语言实现，并且存在于trampoline.s文件中的userret函数中。最终，在这个汇编函数中会调用机器指令返回到用户空间，并且恢复ECALL之后的用户程序的执行。
 
+uservec做的第一件事就是保存寄存器的内容。但在supervisor mode下的代码不允许直接访问物理内存，我们需要将SATP寄存器指向kernel page table，之后就可以使用所有的kernel mapping来存储用户寄存器。对于保存用户寄存器，第一，xv6在每个user page table映射trapframe page，这样每个进程都有自己的trapframe page，这个映射关系指向了一个可以用来存放这个进程的用户寄存器内存位置。第二，在进入user space之前，内核会将trapframe page的地址保存在sscratch寄存器。这个寄存器的作用是保存另一个寄存器的值，并将自己的值加载给另一个寄存器。
+
+从uservec跳转到usertrap，usertrap检查触发trap到原因，确定相应的处理方式。它做到第一件事是更改stvec寄存器，将它指向kernelvec变量，这是内核空间trap处理代码的位置。存储在sepc寄存器中的程序计数器，是用户程序触发trap的指令的地址。但当恢复用户程序时，我们希望在下一条指令恢复，我们要对保存的用户程序计数器加4。最后调用usertrapret。
+
+进入usertrapret后，我们需要关闭中断，将要更新stvec寄存器指向用户空间的trap处理代码。
+
 
 
 # lab: traps
