@@ -42,7 +42,7 @@ static
 void put(int key, int value)
 {
   int i = key % NBUCKET;
-
+ 
   // is the key already present?
   struct entry *e = 0;
   pthread_mutex_lock(&locks[i]);

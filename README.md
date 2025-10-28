@@ -1,7 +1,7 @@
 # Intro
-This is a meaningful course for operating systerm.
+This is a meaningful course about operating systerm.
 
-Here are som Notes and homeworks for mit 6.828(2023).
+Here are some notes and homeworks for mit 6.828(2023).
 
 There may be something wrong with making qemu in version 2024.
 
