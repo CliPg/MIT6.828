@@ -9,6 +9,8 @@ Course website is [here](https://pdos.csail.mit.edu/6.828/2023/schedule.html).
 
 OS.md contains some notes about the book.
 
+🎉finsh all labs (2025.9.13 - 2025.11.2).
+
 # Overview
 - **util**
 
@@ -37,6 +39,18 @@ OS.md contains some notes about the book.
 - **net**
 
     understand the transmission process of package and the interaction between driver and adapter.
+
+- **lock**
+
+    lock granularity, lock contention, and lru.
+
+- **fs**
+
+    double indirect block and symbolic links.
+
+- **mmap**
+
+    virtual memory map.
 
 # References:
 
