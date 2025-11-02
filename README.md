@@ -47,3 +47,5 @@ OS.md contains some notes about the book.
 - [blogs-CLAY](https://zhuanlan.zhihu.com/p/668635247)
 
 - [E-1000](https://pdos.csail.mit.edu/6.828/2023/readings/8254x_GBe_SDM.pdf)
+
+- [mmap](https://www.cnblogs.com/huxiao-tee/p/4660352.html)
